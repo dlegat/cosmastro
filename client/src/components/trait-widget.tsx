@@ -88,6 +88,8 @@ function TraitWidget() {
 }
 
 function OutputSign(bday:string){
+  bday = bday.replace(/-/g, ""); 
+  console.log('Bday', bday);
   var url = "http://localhost:8080/api/results/" + bday;
   axios.get(url, {
     responseType: 'json'

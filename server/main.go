@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
 )
@@ -159,6 +160,9 @@ func findSign(dateString string) (string, error) {
 func main() {
 	// Set the router as the default one shipped with Gin
 	router := gin.Default()
+	config := cors.DefaultConfig()
+	config.AddAllowHeaders("*")
+	config.AllowAllOrigins = true
 
 	// Serve frontend static files
 	router.Use(static.Serve("/", static.LocalFile("./views", true)))
@@ -182,9 +186,10 @@ func main() {
 // Methods
 func calculateSign(c *gin.Context) {
 	fmt.Println("Params", c)
-	bday := c.Params.ByName("bday")
+
+	bday := "06/25/1990" // Change to format MM/DD/YYYY
 	sign, _ := findSign(bday)
-	// c.Header("Content-Type", "application/json")
+	c.Header("Content-Type", "application/json")
 	c.JSON(http.StatusOK, gin.H{
 		"message": sign,
 	})
