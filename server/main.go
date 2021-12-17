@@ -177,7 +177,7 @@ func main() {
 		})
 	}
 
-	api.GET("/api/results/:bday", calculateSign)
+	api.GET("/api/results", calculateSign)
 
 	// Start and run the server
 	router.Run(":8080")
