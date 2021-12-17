@@ -2,70 +2,190 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
+	"time"
 
-	"github.com/gorilla/websocket"
+	"github.com/gin-gonic/contrib/static"
+	"github.com/gin-gonic/gin"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-
-	// We'll need to check the origin of our connection
-	// this will allow us to make requests from our React
-	// development server to here.
-	// For now, we'll do no checking and just allow any connection
-	CheckOrigin: func(r *http.Request) bool { return true },
+type Sign struct {
+	Id     int
+	Name   string
+	Traits string
 }
 
-// define a reader which will listen for
-// new messages being sent to our WebSocket
-// endpoint
-func reader(conn *websocket.Conn) {
-	for {
-		// read in a message
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		// print out that message for clarity
-		fmt.Println(string(p))
+//   'Adventurous', 'Carefree', 'Brave', //Aries
+//   'Stubborn', 'Whiny', 'Intense', //Taurus
+//   'Bored', 'Self-reliant', 'Active', //Gemini
+//   'Needy', 'Loving', 'Generous', //Cancer
+//   'Proud', 'Happy', 'Free', //Leo
+//   'Meticulous', 'Serious', 'Moody', //Virgo
+//   'Playful', 'Lively', 'Upbeat', //Libra
+//   'Passionate', 'Mysterious', 'Quiet', //Scorpio
+//   'Curious', 'Restless', 'Creative', //Sagittarius
+//   'Hardworking', 'Ambitious', 'Methodical', //Capricorn
+//   'Smart', 'Witty', 'Interesting', //Aquarius
+//   'Artistic', 'Emotional', 'Sensitive' //Pisces
 
-		if err := conn.WriteMessage(messageType, p); err != nil {
-			log.Println(err)
-			return
-		}
-
-	}
+// Return descriptions for calculated sign
+var signs = []Sign{
+	Sign{1, "Aries", ""},
+	Sign{2, "Taurus", ""},
+	Sign{3, "Gemini", ""},
+	Sign{4, "Cancer", ""},
+	Sign{5, "Leo", ""},
+	Sign{6, "Virgo", ""},
+	Sign{7, "Libra", ""},
+	Sign{8, "Scorpio", ""},
+	Sign{9, "Sagittarius", ""},
+	Sign{10, "Capricorn", ""},
+	Sign{11, "Aquarius", ""},
+	Sign{12, "Pisces", ""},
 }
 
-// define our WebSocket endpoint
-func serveWs(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.Host)
+func findSign(dateString string) (string, error) {
 
-	// upgrade this connection to a WebSocket
-	// connection
-	ws, err := upgrader.Upgrade(w, r, nil)
+	const dateFormat = "01/02/2006"
+	manageDate := dateString[:len(dateString)-4] //Remove this in the future
+	manageDate += "2006"
+	month := dateString[0:2]
+
+	dateStamp, err := time.Parse(dateFormat, manageDate)
+
 	if err != nil {
-		log.Println(err)
+		return "error", err
 	}
-	// listen indefinitely for new messages coming
-	// through on our WebSocket connection
-	reader(ws)
-}
 
-func setupRoutes() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Simple Server")
-	})
-	// mape our `/ws` endpoint to the `serveWs` function
-	http.HandleFunc("/ws", serveWs)
+	fmt.Println("dateStamp", dateStamp.Format(dateFormat))
+
+	sign := ""
+
+	switch month {
+	case "01":
+		if dateStamp.Day() > 19 {
+			sign = "Aquarius"
+		} else {
+			sign = "Capricorn"
+		}
+	case "02":
+		if dateStamp.Day() > 18 {
+			sign = "Pisces"
+		} else {
+			sign = "Aquarius"
+		}
+	case "03":
+		if dateStamp.Day() > 20 {
+			sign = "Aries"
+		} else {
+			sign = "Pisces"
+		}
+	case "04":
+		if dateStamp.Day() > 19 {
+			sign = "Taurus"
+		} else {
+			sign = "Aries"
+		}
+	case "05":
+		if dateStamp.Day() > 20 {
+			sign = "Gemini"
+		} else {
+			sign = "Taurus"
+		}
+	case "06":
+		if dateStamp.Day() > 20 {
+			sign = "Cancer"
+		} else {
+			sign = "Gemini"
+		}
+	case "07":
+		if dateStamp.Day() > 22 {
+			sign = "Leo"
+		} else {
+			sign = "Cancer"
+		}
+	case "08":
+		if dateStamp.Day() > 22 {
+			sign = "Virgo"
+		} else {
+			sign = "Leo"
+		}
+	case "09":
+		if dateStamp.Day() > 22 {
+			sign = "Libra"
+		} else {
+			sign = "Virgo"
+		}
+	case "10":
+		if dateStamp.Day() > 22 {
+			sign = "Scorpio"
+		} else {
+			sign = "Libra"
+		}
+	case "11":
+		if dateStamp.Day() > 21 {
+			sign = "Sagittarius"
+		} else {
+			sign = "Scorpio"
+		}
+	case "12":
+		if dateStamp.Day() > 21 {
+			sign = "Capricorn"
+		} else {
+			sign = "Sagittarius"
+		}
+	default:
+		fmt.Println("Not a valid month")
+	}
+
+	// var signs = [
+	// Aries 03/21 - 04/19
+	// Taurus 04/20 - 05/20
+	// Gemini 05/21 - 06/20
+	// Cancer 06/21 - 07/22
+	// Leo 07/23 - 08/22
+	// Virgo 08/23 - 09/22
+	// Libra 09/23 - 10/22
+	// Scorpio 10/23 - 11/21
+	// Sagittarius 11/22 - 12/21
+	// Capricorn 12/22 - 01/19
+	// Aquarius 01/20 - 02/18
+	// Pisces 02/19 - 03/20
+	// ];
+
+	return sign, nil
 }
 
 func main() {
-	fmt.Println("cosmastro-server successfully started")
-	setupRoutes()
-	http.ListenAndServe(":8080", nil)
+	// Set the router as the default one shipped with Gin
+	router := gin.Default()
+
+	// Serve frontend static files
+	router.Use(static.Serve("/", static.LocalFile("./views", true)))
+
+	// Setup route group for the API
+	api := router.Group("/api")
+	{
+		api.GET("/", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"message": "Successfully hit go backend",
+			})
+		})
+	}
+
+	api.GET("/api/results/:bday", calculateSign)
+
+	// Start and run the server
+	router.Run(":8080")
+}
+
+// Methods
+func calculateSign(c *gin.Context) {
+	fmt.Println("Params", c)
+	bday := c.Params.ByName("bday")
+	sign, _ := findSign(bday)
+	// c.Header("Content-Type", "application/json")
+	c.JSON(http.StatusOK, gin.H{
+		"message": sign,
+	})
 }
